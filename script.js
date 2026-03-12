@@ -1,58 +1,276 @@
 // ============================================
-// SMOOTH SCROLL NAVIGATION
+// PARTICLE SYSTEM
 // ============================================
 
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+class Particle {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 1.5;
+        this.opacity = Math.random() * 0.5 + 0.2;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounce off edges
+        if (this.x - this.radius < 0 || this.x + this.radius > this.canvas.width) {
+            this.vx *= -1;
         }
-    });
-});
-
-// ============================================
-// ACTIVE NAV LINK HIGHLIGHTING
-// ============================================
-
-function updateActiveNavLink() {
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = document.querySelectorAll('.nav-links a');
-
-    let current = '';
-
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (scrollY >= sectionTop - 200) {
-            current = section.getAttribute('id');
+        if (this.y - this.radius < 0 || this.y + this.radius > this.canvas.height) {
+            this.vy *= -1;
         }
-    });
 
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href').slice(1) === current) {
-            link.classList.add('active');
-        }
-    });
+        // Keep within bounds
+        this.x = Math.max(this.radius, Math.min(this.canvas.width - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(this.canvas.height - this.radius, this.y));
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = `rgba(0, 255, 136, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
-window.addEventListener('scroll', updateActiveNavLink);
+class ParticleSystem {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.particleCount = 30;
+
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+
+        this.createParticles();
+        this.animate();
+    }
+
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    createParticles() {
+        this.particles = [];
+        for (let i = 0; i < this.particleCount; i++) {
+            this.particles.push(new Particle(this.canvas));
+        }
+    }
+
+    animate() {
+        // Clear canvas with fade effect
+        this.ctx.fillStyle = 'rgba(10, 14, 39, 0.1)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Update and draw particles
+        this.particles.forEach(particle => {
+            particle.update();
+            particle.draw(this.ctx);
+        });
+
+        // Draw connections between nearby particles
+        this.drawConnections();
+
+        requestAnimationFrame(() => this.animate());
+    }
+
+    drawConnections() {
+        this.ctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
+        this.ctx.lineWidth = 1;
+
+        for (let i = 0; i < this.particles.length; i++) {
+            for (let j = i + 1; j < this.particles.length; j++) {
+                const dx = this.particles[i].x - this.particles[j].x;
+                const dy = this.particles[i].y - this.particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 100) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
+                    this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
+                    this.ctx.stroke();
+                }
+            }
+        }
+    }
+}
 
 // ============================================
-// INTERSECTION OBSERVER FOR ENTRANCE ANIMATIONS
+// TERMINAL TYPING ANIMATION
 // ============================================
 
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -100px 0px'
-};
+class TerminalTyper {
+    constructor() {
+        this.typingText = document.getElementById('typingText');
+        this.terminalOutput = document.getElementById('terminalOutput');
+        this.isTyping = false;
+        this.start();
+    }
 
-const observer = new IntersectionObserver(function(entries) {
+    async start() {
+        await this.sleep(500);
+        await this.typeCommand('whoami');
+        await this.sleep(300);
+        await this.showOutput([
+            '╭──────────────────────────────────────────────────────────╮',
+            '│ Tomás Ibarra | Junior Developer & Physics Student       │',
+            '│ Location: Montevideo, Uruguay                           │',
+            '│ Passion: Programming, Physics, Problem Solving          │',
+            '╰──────────────────────────────────────────────────────────╯'
+        ]);
+        
+        await this.sleep(1000);
+        await this.typeCommand('skills');
+        await this.sleep(300);
+        await this.showOutput([
+            '$ Languages: Python | C | C++ | JavaScript',
+            '$ Tools: SQL | Git | Odoo | Postman | Selenium',
+            '$ Interests: Data Science | Physics | Mathematics'
+        ]);
+
+        await this.sleep(1000);
+        await this.typeCommand('status');
+        await this.sleep(300);
+        await this.showOutput([
+            '✓ Available for opportunities',
+            '✓ Open to collaboration',
+            '✓ Passionate about impact-driven projects'
+        ]);
+
+        await this.sleep(2000);
+        // Keep looping
+        this.start();
+    }
+
+    async typeCommand(command) {
+        this.isTyping = true;
+        for (let char of command) {
+            this.typingText.textContent += char;
+            await this.sleep(50);
+        }
+        this.typingText.textContent = '';
+        this.isTyping = false;
+    }
+
+    async showOutput(lines) {
+        this.terminalOutput.innerHTML = '';
+        for (let line of lines) {
+            const outputLine = document.createElement('div');
+            outputLine.className = 'output-line';
+            outputLine.textContent = line;
+            this.terminalOutput.appendChild(outputLine);
+            await this.sleep(100);
+        }
+    }
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// ============================================
+// DOWNLOAD CV FUNCTION
+// ============================================
+
+function downloadCV() {
+    // Create a simple CV text file
+    const cvContent = `
+╔═══════════════════════════════════════════════════════════════════╗
+║                    TOMÁS IBARRA - DEVELOPER                      ║
+║                  Junior Developer & Physics Student                ║
+║                     Montevideo, Uruguay                            ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROFILE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Age: 21
+Location: Montevideo, Uruguay
+
+Passionate junior developer and Physics & Mathematics Engineering 
+student at UdelaR. Interested in programming, physics, and solving 
+complex problems through code.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECHNICAL SKILLS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Programming Languages:
+  • Python        • C/C++          • JavaScript    • SQL
+
+Tools & Frameworks:
+  • Git           • GitHub         • Odoo          • Postman
+  • Selenium      • Apache JMeter
+
+Specializations:
+  • Software Testing    • Data Analysis       • Physics Modeling
+  • Mathematical Analysis
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPERIENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Junior Developer at SISINFO
+  • Developed and maintained software solutions
+  • Collaborated with cross-functional teams
+  • Participated in full development lifecycle
+
+Software Tester at SISINFO
+  • Created and executed test plans
+  • Identified and documented bugs
+  • Automation testing with Selenium and Postman
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EDUCATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ingeniería Física Matemática (Physics & Mathematics Engineering)
+  UdelaR (FING) - Currently Studying
+  
+Diplomatura en Testing de Software (Software Testing)
+  CES - Completed 2023
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GitHub:   https://github.com/ttomasibarra
+LinkedIn: https://linkedin.com/in/ttomasibarra
+Email:    ttomasibarra@gmail.com
+Phone:    +598 97 990 860
+
+═══════════════════════════════════════════════════════════════════════`;
+
+    // Create blob and download
+    const blob = new Blob([cvContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Tomas_Ibarra_CV.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize particle system
+    new ParticleSystem('particleCanvas');
+    
+    // Initialize terminal typer
+    new TerminalTyper();
+});
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             entry.target.style.opacity = '1';

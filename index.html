@@ -3,11 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tomás Ibarra - Junior Developer</title>
+    <title>Tomás Ibarra - Developer & Physicist</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- HERO / HEADER SECTION -->
+    <!-- Canvas para partículas de fondo -->
+    <canvas id="particleCanvas"></canvas>
+    
+    <!-- Contenedor de símbolos matemáticos flotantes -->
+    <div class="floating-symbols">
+        <span class="math-symbol">∑</span>
+        <span class="math-symbol">∇</span>
+        <span class="math-symbol">λ</span>
+        <span class="math-symbol">ψ</span>
+        <span class="math-symbol">∂²</span>
+        <span class="math-symbol">∞</span>
+        <span class="math-symbol">∫</span>
+        <span class="math-symbol">π</span>
+    </div>
+    
+    <!-- Contenedor principal -->
+    <div class="main-container">
+        <div class="terminal-container">
+            <!-- Terminal en donde está la intro -->
+            <div class="terminal">
+                <div class="terminal-header">
+                    <span class="window-control close"></span>
+                    <span class="window-control minimize"></span>
+                    <span class="window-control maximize"></span>
+                </div>
+                <div class="terminal-body">
+                    <div class="terminal-content">
+                        <div class="prompt">
+                            <span class="user">user</span>
+                            <span class="at">@</span>
+                            <span class="host">tomas_ibarra</span>
+                            <span class="path">:~$</span>
+                            <span id="typingText" class="typing-text"></span>
+                            <span class="cursor"></span>
+                        </div>
+                        <div class="terminal-output" id="terminalOutput"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información y botones -->
+            <div class="info-section">
+                <h1 class="title">Tomás Ibarra</h1>
+                <p class="subtitle">Junior Developer & Physics Engineering Student</p>
+                <p class="location">📍 Montevideo, Uruguay</p>
+                
+                <div class="about-text">
+                    <p>Passionate about programming, physics, and solving complex problems through code.</p>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="https://github.com/ttomasibarra" target="_blank" class="btn btn-github">
+                        <span class="btn-icon">$</span>
+                        GitHub
+                    </a>
+                    <a href="https://linkedin.com/in/ttomasibarra" target="_blank" class="btn btn-linkedin">
+                        <span class="btn-icon">$</span>
+                        LinkedIn
+                    </a>
+                    <button class="btn btn-cv" onclick="downloadCV()">
+                        <span class="btn-icon">$</span>
+                        Download CV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
     <header class="hero">
         <nav class="navbar">
             <div class="nav-container">
@@ -43,11 +113,7 @@
         </div>
     </header>
 
-    <!-- ABOUT SECTION -->
-    <section id="about" class="section">
-        <div class="container">
-            <h2 class="section-title">About Me</h2>
-            
+
             <div class="about-content">
                 <div class="about-text">
                     <p>Soy Tomás Ibarra, tengo 21 años y soy de Uruguay. Soy desarrollador junior y estudiante de Ingeniería Física Matemática en la UdelaR.</p>
